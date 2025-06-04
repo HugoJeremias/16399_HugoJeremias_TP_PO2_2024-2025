@@ -1,6 +1,5 @@
 // Autor: 16399 - Hugo Jeremias
 package pt.ipbeja.estig.po2.snowman.model;
-
 /**
  * Represents a snowman in the game
  * A snowman is composed of three snowballs: base, middle, and top.

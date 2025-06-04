@@ -25,14 +25,12 @@ import java.util.Optional;
  */
 public class GameBoard extends GridPane implements View {
     private GameModel gameModel;
-    private Position monsterPosition = null;
     private static final int SIZE = 5, CELL_SIZE = 100;
     private final Label movesLabel, scoreLabel;
-    private int lastRow = 2, lastCol = 2, movesCount = 0, level = 1;
+    private int lastRow = 2, lastCol = 2, movesCount = 0, level;
     private static final double smallSnowballSize = CELL_SIZE / 6.0,
                                averageSnowballSize = CELL_SIZE / 4.0,
                                bigSnowballSize = CELL_SIZE / 3.0;
-    private double aditionalRadius = 0;
     private Node[][] cells;
 
     /**
@@ -59,7 +57,7 @@ public class GameBoard extends GridPane implements View {
      * Resets the visual labels and gameBoard for a new level.
      */
     public void loadLevel() {
-        this.monsterPosition = this.getMonster().getPosition();
+        Position monsterPosition = this.getMonster().getPosition();
         this.getChildren().clear();
         this.movesLabel.setText("");
         this.movesCount = 0;
@@ -168,18 +166,19 @@ public class GameBoard extends GridPane implements View {
         alert.getButtonTypes().setAll(closeBtn, new ButtonType("Recomeçar"), new ButtonType("Novo Nível"));
         alert.setContentText(gameWon ? "Vitória!\nPontuação: " + (100 - this.movesCount) + " pontos" : "Game Over.");
         Optional<ButtonType> result = alert.showAndWait();
-        gameCompletionOption(result);
+        if(result.isPresent()) {
+            String btn = result.get().getText();
+            gameCompletionOption(btn);
+        }
     }
 
     /**
      * Handles the options presented to the player after the game is completed.
      * Depending on the button clicked, it either restarts the game, starts a new level, or closes the application.
      *
-     * @param result the button type selected by the player
+     * @param btn the button type selected by the player
      */
-    public void gameCompletionOption(Optional<ButtonType> result) {
-        assert result.isPresent();
-        String btn = result.get().getText();
+    public void gameCompletionOption(String btn) {
         switch (btn) {
             case "Recomeçar" -> loadLevel();
             case "Novo Nível" -> {
@@ -220,7 +219,7 @@ public class GameBoard extends GridPane implements View {
      * @param cell the cell where the snowball will be added
      */
     public void generateSnowBall(SnowBallType type, StackPane cell) {
-        this.aditionalRadius = 0;
+        double aditionalRadius = 0;
         assert cell != null && type != null;
         Circle circle = defaultSnowball();
         switch (type) {
@@ -248,7 +247,7 @@ public class GameBoard extends GridPane implements View {
                 break;
             }
         }
-        if(this.aditionalRadius > 0) {
+        if(aditionalRadius > 0) {
             Circle aditional = defaultSnowball();
             aditional.setRadius(aditionalRadius);
             aditional.setTranslateY(-averageSnowballSize);
@@ -306,9 +305,6 @@ public class GameBoard extends GridPane implements View {
         switch (content) {
             case SNOW:
                 background.setFill(Color.WHITE);
-                break;
-            case NO_SNOW:
-                background.setFill(Color.GRAY);
                 break;
             case BLOCK:
                 background.setFill(Color.BLACK);
