@@ -5,6 +5,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
@@ -23,14 +25,14 @@ import java.util.Optional;
  * It includes methods for loading levels, creating the game board, handling keyboard controls,
  * and generating visual elements like snowballs, monsters, and snowmen.
  */
-public class GameBoard extends GridPane implements View {
+public class ImageGameBoard extends GridPane implements View {
     private GameModel gameModel;
     private static final int SIZE = 5, CELL_SIZE = 100;
     private final Label movesLabel, scoreLabel;
     private int lastRow = 2, lastCol = 2, movesCount = 0, level;
     private static final double smallSnowballSize = CELL_SIZE / 6.0,
-                               averageSnowballSize = CELL_SIZE / 4.0,
-                               bigSnowballSize = CELL_SIZE / 3.0;
+            averageSnowballSize = CELL_SIZE / 4.0,
+            bigSnowballSize = CELL_SIZE / 3.0;
     private Node[][] cells;
 
     /**
@@ -41,7 +43,7 @@ public class GameBoard extends GridPane implements View {
      * @param level the current level of the game
      * @param scoreLabel the label to display the score
      */
-    public GameBoard(Label movesLabel, int level, Label scoreLabel, String playerName) {
+    public ImageGameBoard(Label movesLabel, int level, Label scoreLabel, String playerName) {
         this.movesLabel = movesLabel;
         this.gameModel = new GameModel(this, playerName);
         this.cells = new Node[SIZE][SIZE];
@@ -70,7 +72,7 @@ public class GameBoard extends GridPane implements View {
      * Creates a labeled game board with labels for rows and columns.
      * Each cell is generated using the generateElement method.
      */
-   private void createNumberedGameBoard() {
+    private void createNumberedGameBoard() {
         GridPane numberedGrid = new GridPane();
 
         for (int col = 0; col < SIZE; col++) {
@@ -181,14 +183,7 @@ public class GameBoard extends GridPane implements View {
      */
     public void gameCompletionOption(String btn) {
         switch (btn) {
-            case "Recomeçar" -> {
-                this.gameModel = new GameModel(this, this.level);
-                this.cells = new Node[SIZE][SIZE];
-                loadLevel();
-                createNumberedGameBoard();
-                setupKeyboardControls();
-                this.updateBoard();
-            }
+            case "Recomeçar" -> loadLevel();
             case "Novo Nível" -> {
                 this.level++;
                 this.gameModel = new GameModel(this, this.level);
@@ -205,20 +200,6 @@ public class GameBoard extends GridPane implements View {
     //region Visual MobileElement Generation
 
     /**
-     * Generates a default type of the visual snowball object.
-     * The snowball is represented as a Circle with a specific radius and color.
-     * The default size is set to the small snowball size.
-     *
-     */
-    private Circle defaultSnowball(){
-        Circle circle = new Circle();
-        circle.setRadius(smallSnowballSize);
-        circle.setFill(Color.LIGHTBLUE);
-        circle.setStroke(Color.BLACK);
-        return circle;
-    }
-
-    /**
      * Generates a snowball of a specific type and adds it to the given cell.
      * The snowball can be of different sizes based on the SnowBallType.
      * If the type requires an additional stacked snowball, it generates it.
@@ -227,43 +208,42 @@ public class GameBoard extends GridPane implements View {
      * @param cell the cell where the snowball will be added
      */
     public void generateSnowBall(SnowBallType type, StackPane cell) {
-        double aditionalRadius = 0;
-        assert cell != null && type != null;
-        Circle circle = defaultSnowball();
+        String imageName;
+        double size;
+
         switch (type) {
-            case AVERAGE: {
-                circle.setRadius(averageSnowballSize);
-                break;
+            case SMALL, AVERAGE, BIG -> {
+                imageName = "snowball.png";
+                size = switch (type) {
+                    case SMALL -> CELL_SIZE * 0.4;
+                    case AVERAGE -> CELL_SIZE * 0.6;
+                    case BIG -> CELL_SIZE * 0.8;
+                    default -> CELL_SIZE;
+                };
             }
-            case BIG: {
-                circle.setRadius(bigSnowballSize);
-                break;
+            case BIG_AVERAGE -> {
+                imageName = "snowball_big_average.png";
+                size = CELL_SIZE;
             }
-            case BIG_AVERAGE: {
-                circle.setRadius(bigSnowballSize);
-                aditionalRadius = averageSnowballSize;
-                break;
+            case BIG_SMAL -> {
+                imageName = "snowball_big_small.png";
+                size = CELL_SIZE;
             }
-            case BIG_SMAL: {
-                circle.setRadius(bigSnowballSize);
-                aditionalRadius = smallSnowballSize;
-                break;
+            case AVERAGE_SMALL -> {
+                imageName = "snowball_average_small.png";
+                size = CELL_SIZE;
             }
-            case AVERAGE_SMALL: {
-                circle.setRadius(averageSnowballSize);
-                aditionalRadius = smallSnowballSize;
-                break;
+            default -> {
+                imageName = "snowball.png";
+                size = CELL_SIZE * 0.4;
             }
         }
-        if(aditionalRadius > 0) {
-            Circle aditional = defaultSnowball();
-            aditional.setRadius(aditionalRadius);
-            aditional.setTranslateY(-averageSnowballSize);
-            cell.getChildren().addAll(circle, aditional);
-        }
-        else {
-            cell.getChildren().add(circle);
-        }
+
+        Image img = new Image(getClass().getResourceAsStream("/" + imageName));
+        ImageView imageView = new ImageView(img);
+        imageView.setFitWidth(size);
+        imageView.setFitHeight(size);
+        cell.getChildren().add(imageView);
     }
 
     /**
@@ -273,10 +253,11 @@ public class GameBoard extends GridPane implements View {
      * @param cell the cell where the monster will be added
      */
     private void generateMonster(StackPane cell) {
-        assert cell != null;
-        Circle monster = new Circle((double) CELL_SIZE / 4);
-        monster.setFill(Color.RED);
-        cell.getChildren().add(monster);
+        Image img = new Image(getClass().getResourceAsStream("/monster.png"));
+        ImageView imageView = new ImageView(img);
+        imageView.setFitWidth(CELL_SIZE * 0.8);
+        imageView.setFitHeight(CELL_SIZE * 0.8);
+        cell.getChildren().add(imageView);
     }
 
     /**
@@ -287,17 +268,13 @@ public class GameBoard extends GridPane implements View {
      * @param cell the cell where the snowman will be added
      */
     public void generateSnowman(StackPane cell) {
-        assert cell != null;
-        Circle baseCircle = defaultSnowball();
-        baseCircle.setRadius(bigSnowballSize);
+        Image base = new Image(getClass().getResourceAsStream("/snowman.png"));
 
-        Circle middleCircle = defaultSnowball();
-        middleCircle.setRadius(averageSnowballSize);
-        middleCircle.setTranslateY(-averageSnowballSize);
+        ImageView baseView = new ImageView(base);
+        baseView.setFitWidth(CELL_SIZE);
+        baseView.setFitHeight(CELL_SIZE);
 
-        Circle topCircle = defaultSnowball();
-        topCircle.setTranslateY(-(averageSnowballSize + smallSnowballSize));
-        cell.getChildren().addAll(baseCircle, middleCircle, topCircle);
+        cell.getChildren().addAll(baseView);
     }
     //endregion
 
@@ -309,19 +286,16 @@ public class GameBoard extends GridPane implements View {
      * @param content the content type of the position
      */
     private void setCellBackground(StackPane cell, PositionContent content) {
-        Rectangle background = new Rectangle(CELL_SIZE, CELL_SIZE);
-        switch (content) {
-            case SNOW:
-                background.setFill(Color.WHITE);
-                break;
-            case BLOCK:
-                background.setFill(Color.BLACK);
-                break;
-            default:
-                background.setFill(Color.GRAY);
-        }
-        background.setStroke(Color.BLACK);
-        cell.getChildren().add(background);
+        String imageName = switch (content) {
+            case SNOW -> "snow.png";
+            case BLOCK -> "block.png";
+            default -> "ground.png";
+        };
+        Image img = new Image(getClass().getResourceAsStream("/" + imageName));
+        ImageView imageView = new ImageView(img);
+        imageView.setFitWidth(CELL_SIZE);
+        imageView.setFitHeight(CELL_SIZE);
+        cell.getChildren().add(imageView);
     }
 
     /**

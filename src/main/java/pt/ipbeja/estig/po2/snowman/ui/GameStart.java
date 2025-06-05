@@ -47,13 +47,42 @@ public class GameStart extends Application {
 
     }*/
     public void start(Stage stage) {
-        // Diálogo para nome e nível
+        Pair<String, Integer> config = showConfigDialog();
+        String playerName = config.getKey();
+        int level = config.getValue();
+
+        VBox infoPane = createInfoPane(playerName);
+        ScrollPane scrollPane = createMovesPane();
+        Label movesLabel = (Label) ((VBox) scrollPane.getContent()).getChildren().get(0);
+        Label scoreLabel = (Label) infoPane.getChildren().get(1);
+
+        GameBoard gameBoard = new GameBoard(movesLabel, level, scoreLabel, playerName);
+        //ImageGameBoard gameBoard = new ImageGameBoard(movesLabel, level, scoreLabel, playerName);
+
+        VBox leftPane = new VBox(gameBoard, scrollPane);
+        leftPane.setMaxWidth(400);
+
+        HBox root = new HBox(10, leftPane, infoPane);
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.setTitle("A Good Snowman is Hard to Build");
+        stage.show();
+        gameBoard.requestFocus();
+    }
+
+    private Pair<String, Integer> showConfigDialog() {
         Dialog<Pair<String, Integer>> dialog = new Dialog<>();
         dialog.setTitle("Configuração do Jogo");
 
         Label nameLabel = new Label("Nome:");
         TextField nameField = new TextField();
         nameField.setPromptText("Insira o seu nome");
+        final int MAX_CHARS = 3;
+        nameField.textProperty().addListener((obs, oldText, newText) -> {
+            if (newText.length() > MAX_CHARS) {
+                nameField.setText(oldText);
+            }
+        });
 
         Label levelLabel = new Label("Nível:");
         javafx.scene.control.ChoiceBox<Integer> levelChoice = new javafx.scene.control.ChoiceBox<>();
@@ -72,58 +101,35 @@ public class GameStart extends Application {
         });
 
         Optional<Pair<String, Integer>> result = dialog.showAndWait();
-        String playerName = result.map(Pair::getKey).orElse("Jogador");
-        int level = result.map(Pair::getValue).orElse(1);
+        return result.orElse(new Pair<>("Jogador", 1));
+    }
 
-        // Painel de informações à direita
+    private VBox createInfoPane(String playerName) {
         Label playerNameLabel = new Label("Jogador: " + playerName);
         Label scoreLabel = new Label("Pontuação: ");
-
-        // Legenda visual
         VBox legendBox = new VBox(5);
         legendBox.getChildren().add(new Label("Legenda:"));
-
-        // Bola de neve pequena (azul)
         HBox snowballLegend = new HBox(5, new Circle(8, javafx.scene.paint.Color.LIGHTBLUE), new Label("Bola de neve pequena"));
-        // Monstro (vermelho)
         HBox monsterLegend = new HBox(5, new Circle(8, javafx.scene.paint.Color.RED), new Label("Monstro"));
-        // Neve (branco)
         HBox snowLegend = new HBox(5, new Rectangle(16, 16, javafx.scene.paint.Color.WHITE), new Label("Neve"));
-        // Bloco (preto)
         HBox blockLegend = new HBox(5, new Rectangle(16, 16, javafx.scene.paint.Color.BLACK), new Label("Bloco"));
-        // Setas
         HBox arrowsLegend = new HBox(5, new Label("\u2190 \u2191 \u2192 \u2193"), new Label("Mover personagem"));
-        // Objetivo
         HBox goalLegend = new HBox(5, new Label("🎯"), new Label("Construir o boneco de neve!"));
-
         legendBox.getChildren().addAll(snowballLegend, monsterLegend, snowLegend, blockLegend, arrowsLegend, goalLegend);
-
         VBox infoPane = new VBox(10, playerNameLabel, scoreLabel, legendBox);
         infoPane.setStyle("-fx-padding: 10; -fx-background-color: #f0f0f0;");
+        return infoPane;
+    }
 
-        // Painel de jogadas
+    private ScrollPane createMovesPane() {
         Label movesLabel = new Label("Jogadas:");
         movesLabel.setWrapText(true);
         VBox contentBox = new VBox(movesLabel);
-        //contentBox.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(contentBox);
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefHeight(100);
         scrollPane.setMaxWidth(550);
-
-        GameBoard gameBoard = new GameBoard(movesLabel, level, scoreLabel);
-// Tabuleiro e painel de jogadas juntos
-        VBox leftPane = new VBox(gameBoard, scrollPane);
-        leftPane.setMaxWidth(400); // Limita a largura máxima do painel esquerdo
-
-// Layout principal: tabuleiro à esquerda, info à direita
-        HBox root = new HBox(10, leftPane, infoPane);
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.setTitle("A Good Snowman is Hard to Build");
-        stage.show();
-
-        gameBoard.requestFocus();
+        return scrollPane;
     }
 
     public static void main(String[] args) {
