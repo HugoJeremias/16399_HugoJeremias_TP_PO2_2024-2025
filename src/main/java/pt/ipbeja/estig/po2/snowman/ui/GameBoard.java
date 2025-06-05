@@ -26,12 +26,13 @@ import java.util.Optional;
 public class GameBoard extends GridPane implements View {
     private GameModel gameModel;
     private static final int SIZE = 5, CELL_SIZE = 100;
-    private final Label movesLabel, scoreLabel;
+    private final Label movesLabel, scoreLabel, leaderBoardLabel;
     private int lastRow = 2, lastCol = 2, movesCount = 0, level;
     private static final double smallSnowballSize = CELL_SIZE / 6.0,
                                averageSnowballSize = CELL_SIZE / 4.0,
                                bigSnowballSize = CELL_SIZE / 3.0;
     private Node[][] cells;
+    private String playerName;
 
     /**
      * Constructor for the GameBoard class.
@@ -41,15 +42,17 @@ public class GameBoard extends GridPane implements View {
      * @param level the current level of the game
      * @param scoreLabel the label to display the score
      */
-    public GameBoard(Label movesLabel, int level, Label scoreLabel, String playerName) {
+    public GameBoard(Label movesLabel, int level, Label scoreLabel, Label leaderBoardLabel, String playerName) {
         this.movesLabel = movesLabel;
         this.gameModel = new GameModel(this, playerName);
         this.cells = new Node[SIZE][SIZE];
         this.level = level;
         this.scoreLabel = scoreLabel;
+        this.leaderBoardLabel = leaderBoardLabel;
+        this.playerName = playerName;
         loadLevel();
         createNumberedGameBoard();
-        setupKeyboardControls();
+        KeyboardControls();
         this.updateBoard();
     }
 
@@ -64,6 +67,7 @@ public class GameBoard extends GridPane implements View {
         this.movesCount = 0;
         this.lastRow = monsterPosition.getRow();
         this.lastCol = monsterPosition.getCol();
+        this.leaderBoardLabel.setText(this.getTopFiveScores());
     }
 
     /**
@@ -100,7 +104,7 @@ public class GameBoard extends GridPane implements View {
      * Sets up keyboard controls for the game board.
      * Allows the player to move the monster using arrow keys.
      */
-    private void setupKeyboardControls() {
+    private void KeyboardControls() {
         this.setFocusTraversable(true);
         this.requestFocus();
         this.setOnKeyPressed(event -> {
@@ -117,11 +121,10 @@ public class GameBoard extends GridPane implements View {
             assert direction != null;
             try {
                 this.moveMonster(direction);
+                updateMovesInformation();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            updateMovesInformation();
 
         });
     }
@@ -131,18 +134,19 @@ public class GameBoard extends GridPane implements View {
      * Increments the moves count, updates the score label, and updates the board.
      */
     private void updateMovesInformation() {
-        movesCount++;
+        this.movesCount++;
         int newRow = this.getMonster().getPosition().getRow();
         int newCol = this.getMonster().getPosition().getCol();
         this.updateMovesValue(lastRow, lastCol, newRow, newCol);
-        this.scoreLabel.setText("Pontuação: " + (100 - movesCount));
-        movesLabel.setText(movesLabel.getText() + " " + this.updateMovesValue(lastRow, lastCol, newRow, newCol));
+        this.scoreLabel.setText("Pontuação: " + movesCount);
+        this.movesLabel.setText(this.movesLabel.getText() + " " + this.updateMovesValue(this.lastRow, this.lastCol, newRow, newCol));
         this.lastRow = newRow;
         this.lastCol = newCol;
-        updateBoard();
+        this.updateBoard();
         if(movesCount == 100) {
-            showGameCompleteMessage(false, null);
+            this.showGameCompleteMessage(false, null);
         }
+        //this.updateMovesCount(movesCount);
     }
 
     /**
@@ -165,7 +169,7 @@ public class GameBoard extends GridPane implements View {
         alert.setHeaderText(null);
         ButtonType closeBtn = new ButtonType("Fechar");
         alert.getButtonTypes().setAll(closeBtn, new ButtonType("Recomeçar"), new ButtonType("Novo Nível"));
-        alert.setContentText(gameWon ? "Vitória!\nPontuação: " + (100 - this.movesCount) + " pontos" : "Game Over.");
+        alert.setContentText(gameWon ? "Vitória!\nPontuação: " + this.movesCount + " pontos" : "Game Over.");
         Optional<ButtonType> result = alert.showAndWait();
         if(result.isPresent()) {
             String btn = result.get().getText();
@@ -182,20 +186,20 @@ public class GameBoard extends GridPane implements View {
     public void gameCompletionOption(String btn) {
         switch (btn) {
             case "Recomeçar" -> {
-                this.gameModel = new GameModel(this, this.level);
+                this.gameModel = new GameModel(this, this.level, this.playerName);
                 this.cells = new Node[SIZE][SIZE];
                 loadLevel();
                 createNumberedGameBoard();
-                setupKeyboardControls();
+                KeyboardControls();
                 this.updateBoard();
             }
             case "Novo Nível" -> {
                 this.level++;
-                this.gameModel = new GameModel(this, this.level);
+                this.gameModel = new GameModel(this, this.level, this.playerName);
                 this.cells = new Node[SIZE][SIZE];
                 loadLevel();
                 createNumberedGameBoard();
-                setupKeyboardControls();
+                KeyboardControls();
                 this.updateBoard();
             }
             case "Fechar" -> javafx.application.Platform.exit();
@@ -454,5 +458,16 @@ public class GameBoard extends GridPane implements View {
     public Boolean moveMonster(Direction direction) throws IOException {
         return gameModel.moveMonster(direction);
     }
+
+    @Override
+    public void updateMovesCount(int movesCount) {
+        gameModel.setMovesCount(movesCount);
+    }
+
+    @Override
+    public String getTopFiveScores() {
+        return gameModel.getTopFiveScores();
+    }
+
 }
 

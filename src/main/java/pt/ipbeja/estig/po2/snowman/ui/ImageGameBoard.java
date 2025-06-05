@@ -11,7 +11,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import pt.ipbeja.estig.po2.snowman.model.*;
 import java.io.IOException;
@@ -30,10 +29,8 @@ public class ImageGameBoard extends GridPane implements View {
     private static final int SIZE = 5, CELL_SIZE = 100;
     private final Label movesLabel, scoreLabel;
     private int lastRow = 2, lastCol = 2, movesCount = 0, level;
-    private static final double smallSnowballSize = CELL_SIZE / 6.0,
-            averageSnowballSize = CELL_SIZE / 4.0,
-            bigSnowballSize = CELL_SIZE / 3.0;
     private Node[][] cells;
+    private String playerName;
 
     /**
      * Constructor for the GameBoard class.
@@ -49,6 +46,7 @@ public class ImageGameBoard extends GridPane implements View {
         this.cells = new Node[SIZE][SIZE];
         this.level = level;
         this.scoreLabel = scoreLabel;
+        this.playerName = playerName;
         loadLevel();
         createNumberedGameBoard();
         setupKeyboardControls();
@@ -145,6 +143,7 @@ public class ImageGameBoard extends GridPane implements View {
         if(movesCount == 100) {
             showGameCompleteMessage(false, null);
         }
+        this.updateMovesCount(movesCount);
     }
 
     /**
@@ -186,7 +185,7 @@ public class ImageGameBoard extends GridPane implements View {
             case "Recomeçar" -> loadLevel();
             case "Novo Nível" -> {
                 this.level++;
-                this.gameModel = new GameModel(this, this.level);
+                this.gameModel = new GameModel(this, this.level, this.playerName);
                 this.cells = new Node[SIZE][SIZE];
                 loadLevel();
                 createNumberedGameBoard();
@@ -427,6 +426,16 @@ public class ImageGameBoard extends GridPane implements View {
     @Override
     public Boolean moveMonster(Direction direction) throws IOException {
         return gameModel.moveMonster(direction);
+    }
+
+    @Override
+    public void updateMovesCount(int movesCount) {
+        gameModel.setMovesCount(movesCount);
+    }
+
+    @Override
+    public String getTopFiveScores() {
+        return gameModel.getTopFiveScores();
     }
 }
 

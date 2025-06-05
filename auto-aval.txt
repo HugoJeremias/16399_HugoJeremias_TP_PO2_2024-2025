@@ -1,0 +1,19 @@
+Requisitos Essenciais Cumpridos:
+ - Req. 1 - Classes a definir (1,0 valores)
+ - Req. 2 - Testes a definir (4,5 valores)
+ - Req. 3 - Apresentação dos Movimentos(1,0 valores)
+ - Req. 4 - Deteção de fim (0,5 valores)
+ - Req. 5 - Gravação dos movimentos para ficheiro (1,5 valores)
+ - Req. 6 - Imagens (1,5 valores) - Não tinha bem a certeza do que pretendido,
+            e então criei dois gameBoards, um que utiliza formas simples com diferentes
+            tamanhos e cores para os MobileElements e quadrados de cores diferentes
+            para os PositionContents, no outro utilizei imagens para os objetos.
+            Dei a hipótese ao jogador de selecionar o estilo que preferir.
+
+ Requisitos Não Essenciais Cumpridos:
+ 
+
+
+
+
+ Classificação: 10 valores

@@ -84,4 +84,10 @@ public interface View {
      * @throws IOException if an I/O error occurs
      */
     Boolean moveMonster(Direction direction) throws IOException;
+
+    void updateMovesCount(int movesCount);
+
+    String getTopFiveScores();
+
+
 }

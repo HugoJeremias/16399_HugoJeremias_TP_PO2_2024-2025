@@ -55,8 +55,9 @@ public class GameStart extends Application {
         ScrollPane scrollPane = createMovesPane();
         Label movesLabel = (Label) ((VBox) scrollPane.getContent()).getChildren().get(0);
         Label scoreLabel = (Label) infoPane.getChildren().get(1);
+        Label leaderboardLabel = (Label) infoPane.getChildren().get(2);
 
-        GameBoard gameBoard = new GameBoard(movesLabel, level, scoreLabel, playerName);
+        GameBoard gameBoard = new GameBoard(movesLabel, level, scoreLabel, leaderboardLabel, playerName);
         //ImageGameBoard gameBoard = new ImageGameBoard(movesLabel, level, scoreLabel, playerName);
 
         VBox leftPane = new VBox(gameBoard, scrollPane);
@@ -107,6 +108,7 @@ public class GameStart extends Application {
     private VBox createInfoPane(String playerName) {
         Label playerNameLabel = new Label("Jogador: " + playerName);
         Label scoreLabel = new Label("Pontuação: ");
+        Label leaderboardLabel = new Label("Pontuações: ");
         VBox legendBox = new VBox(5);
         legendBox.getChildren().add(new Label("Legenda:"));
         HBox snowballLegend = new HBox(5, new Circle(8, javafx.scene.paint.Color.LIGHTBLUE), new Label("Bola de neve pequena"));
@@ -116,7 +118,7 @@ public class GameStart extends Application {
         HBox arrowsLegend = new HBox(5, new Label("\u2190 \u2191 \u2192 \u2193"), new Label("Mover personagem"));
         HBox goalLegend = new HBox(5, new Label("🎯"), new Label("Construir o boneco de neve!"));
         legendBox.getChildren().addAll(snowballLegend, monsterLegend, snowLegend, blockLegend, arrowsLegend, goalLegend);
-        VBox infoPane = new VBox(10, playerNameLabel, scoreLabel, legendBox);
+        VBox infoPane = new VBox(10, playerNameLabel, scoreLabel, leaderboardLabel, legendBox);
         infoPane.setStyle("-fx-padding: 10; -fx-background-color: #f0f0f0;");
         return infoPane;
     }
