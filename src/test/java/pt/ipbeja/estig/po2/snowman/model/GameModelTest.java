@@ -9,11 +9,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class GameModelTest {
 
-    private View view;
+    private static final int level = 0;
+    private static final String playerName = "TST";
 
     @Test
     void testMonsterToTheLeft() throws IOException {
-        GameModel gameModel = new GameModel(null, "AAA");
+        GameModel gameModel = new GameModel(null, level, playerName);
         System.out.println("Original Monster position: " + gameModel.getMonster().getPosition());
         boolean moved = gameModel.moveMonster(Direction.LEFT);
         assertTrue(moved);
@@ -22,7 +23,7 @@ public class GameModelTest {
 
     @Test
     void testCreateAverageSnowball() throws IOException {
-        GameModel gameModel = new GameModel(null,"AAA");
+        GameModel gameModel = new GameModel(null, level, playerName);
         System.out.println("Monster position: " + gameModel.getMonster().getPosition());
         System.out.println(gameModel.getSnowballs().get(0).getType() +  " position: " + gameModel.getSnowballs().get(0).getPosition());
         System.out.println(gameModel.getSnowballs().get(1).getType() +  " position: " + gameModel.getSnowballs().get(1).getPosition());
@@ -38,7 +39,7 @@ public class GameModelTest {
     @Test
     void testCreateBigSnowball() throws IOException {
 
-        GameModel gameModel = new GameModel(null, "AAA");
+        GameModel gameModel = new GameModel(null, level, playerName);
         System.out.println("Monster position: " + gameModel.getMonster().getPosition());
         System.out.println(gameModel.getSnowballs().get(0).getType() +  " position: " + gameModel.getSnowballs().get(0).getPosition());
         System.out.println(gameModel.getSnowballs().get(1).getType() +  " position: " + gameModel.getSnowballs().get(1).getPosition());
@@ -54,7 +55,7 @@ public class GameModelTest {
 
     @Test
     void testMaintainBigSnowball() throws IOException {
-        GameModel gameModel = new GameModel(null, "AAA");
+        GameModel gameModel = new GameModel(null, level, playerName);
 
         System.out.println("Monster position: " + gameModel.getMonster().getPosition());
         System.out.println(gameModel.getSnowballs().get(0).getType() +  " position: " + gameModel.getSnowballs().get(0).getPosition());
@@ -77,7 +78,7 @@ public class GameModelTest {
 
     @Test
     void testBigAverage() throws IOException {
-        GameModel gameModel = new GameModel(null, "AAA");
+        GameModel gameModel = new GameModel(null, level, playerName);
 
         System.out.println("Monster position: " + gameModel.getMonster().getPosition());
         System.out.println(gameModel.getSnowballs().get(0).getType() +  " position: " + gameModel.getSnowballs().get(0).getPosition());
@@ -94,7 +95,7 @@ public class GameModelTest {
 
     @Test
     void testCompleteSnowman() throws IOException {
-        GameModel gameModel = new GameModel(null, "AAA");
+        GameModel gameModel = new GameModel(null, level, playerName);
 
         System.out.println("Monster position: " + gameModel.getMonster().getPosition());
         System.out.println(gameModel.getSnowballs().get(0).getType() +  " position: " + gameModel.getSnowballs().get(0).getPosition());

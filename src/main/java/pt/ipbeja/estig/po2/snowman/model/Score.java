@@ -43,7 +43,7 @@ public class Score {
 
     @Override
     public String toString() {
-        return this.playerName + " (" + this.level + "): " + this.movesCount + " movimentos";
+        return this.movesCount + " " + this.level + " " + this.playerName;
     }
 
     public void setMovesCount(int movesCount) {

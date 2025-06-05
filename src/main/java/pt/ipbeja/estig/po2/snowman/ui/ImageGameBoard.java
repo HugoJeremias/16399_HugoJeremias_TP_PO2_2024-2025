@@ -42,11 +42,11 @@ public class ImageGameBoard extends GridPane implements View {
      */
     public ImageGameBoard(Label movesLabel, int level, Label scoreLabel, String playerName) {
         this.movesLabel = movesLabel;
-        this.gameModel = new GameModel(this, playerName);
-        this.cells = new Node[SIZE][SIZE];
-        this.level = level;
-        this.scoreLabel = scoreLabel;
         this.playerName = playerName;
+        this.level = level;
+        this.gameModel = new GameModel(this, this.level, this.playerName);
+        this.cells = new Node[SIZE][SIZE];
+        this.scoreLabel = scoreLabel;
         loadLevel();
         createNumberedGameBoard();
         setupKeyboardControls();

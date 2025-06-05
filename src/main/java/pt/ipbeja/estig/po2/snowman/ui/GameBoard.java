@@ -44,12 +44,12 @@ public class GameBoard extends GridPane implements View {
      */
     public GameBoard(Label movesLabel, int level, Label scoreLabel, Label leaderBoardLabel, String playerName) {
         this.movesLabel = movesLabel;
-        this.gameModel = new GameModel(this, playerName);
         this.cells = new Node[SIZE][SIZE];
         this.level = level;
+        this.playerName = playerName;
+        this.gameModel = new GameModel(this, this.level, this.playerName);
         this.scoreLabel = scoreLabel;
         this.leaderBoardLabel = leaderBoardLabel;
-        this.playerName = playerName;
         loadLevel();
         createNumberedGameBoard();
         KeyboardControls();
@@ -146,7 +146,7 @@ public class GameBoard extends GridPane implements View {
         if(movesCount == 100) {
             this.showGameCompleteMessage(false, null);
         }
-        //this.updateMovesCount(movesCount);
+        this.updateMovesCount(movesCount);
     }
 
     /**

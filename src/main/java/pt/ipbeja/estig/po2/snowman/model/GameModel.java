@@ -3,6 +3,7 @@ package pt.ipbeja.estig.po2.snowman.model;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ public class GameModel {
     private Score score;
     private List<Score> scores = new ArrayList<>();
 
-    public GameModel(View view, String playerName) {
+    /*public GameModel(View view, String playerName) {
         this.movesCount = 0;
         this.view = view;
         this.score = new Score(playerName, this.level, this.movesCount);
@@ -29,7 +30,7 @@ public class GameModel {
             e.printStackTrace();
         }
 
-    }
+    }*/
 
     public GameModel(View view, int level, String playerName) {
         this.view = view;
@@ -210,6 +211,16 @@ public class GameModel {
             out.println("Total de movimentos: " + this.score.getMovesCount());
             out.println("Posição do boneco de neve: (" + (snowmanPos.getRow() + 1) + "," + (char)('A' + snowmanPos.getCol()) + ")");
         }
+        this.saveScoreToFile();
+    }
+
+    private void saveScoreToFile() {
+        try (PrintWriter out = new PrintWriter(new java.io.OutputStreamWriter(
+                new java.io.FileOutputStream(this.scoresFilename, true), StandardCharsets.UTF_8))) {
+            out.println(this.score.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public String updateMovesValue(int lastRow, int lastCol, int newRow, int newCol) {
@@ -233,7 +244,8 @@ public class GameModel {
                     int level = Integer.parseInt(parts[1].trim());
                     int movesCount = Integer.parseInt(parts[0].trim());
                     Score score = new Score(playerName, level, movesCount);
-                    this.scores.add(score);
+                    if(level == this.level)
+                        this.scores.add(score);
                 }
             }
             return this.scores;
