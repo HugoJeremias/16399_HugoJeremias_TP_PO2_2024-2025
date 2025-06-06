@@ -47,9 +47,10 @@ public class GameStart extends Application {
 
     }*/
     public void start(Stage stage) {
-        Pair<String, Integer> config = showConfigDialog();
-        String playerName = config.getKey();
-        int level = config.getValue();
+        GameConfig config = showConfigDialog();
+        String playerName = config.getPlayerName();
+        int level = config.getLevel();
+        String levelStyle = config.getLevelStyle();
 
         VBox infoPane = createInfoPane(playerName);
         ScrollPane scrollPane = createMovesPane();
@@ -57,8 +58,17 @@ public class GameStart extends Application {
         Label scoreLabel = (Label) infoPane.getChildren().get(1);
         Label leaderboardLabel = (Label) infoPane.getChildren().get(2);
 
-        GameBoard gameBoard = new GameBoard(movesLabel, level, scoreLabel, leaderboardLabel, playerName);
-        //ImageGameBoard gameBoard = new ImageGameBoard(movesLabel, level, scoreLabel, playerName);
+        if(levelStyle == null || levelStyle.equals("Formas")) {
+            GameBoard gameBoard = new GameBoard(movesLabel, level, scoreLabel, leaderboardLabel, playerName);
+            showGameBoard(gameBoard, infoPane, scrollPane, stage);
+        }
+        else {
+            ImageGameBoard gameBoard = new ImageGameBoard(movesLabel, level, scoreLabel, playerName);
+            showImageGameBoard(gameBoard, infoPane, scrollPane, stage);
+        }
+    }
+
+    private void showImageGameBoard(ImageGameBoard gameBoard, VBox infoPane, ScrollPane scrollPane, Stage stage) {
 
         VBox leftPane = new VBox(gameBoard, scrollPane);
         leftPane.setMaxWidth(400);
@@ -71,8 +81,20 @@ public class GameStart extends Application {
         gameBoard.requestFocus();
     }
 
-    private Pair<String, Integer> showConfigDialog() {
-        Dialog<Pair<String, Integer>> dialog = new Dialog<>();
+    private void showGameBoard(GameBoard gameBoard, VBox infoPane, ScrollPane scrollPane, Stage stage) {
+        VBox leftPane = new VBox(gameBoard, scrollPane);
+        leftPane.setMaxWidth(400);
+
+        HBox root = new HBox(10, leftPane, infoPane);
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.setTitle("A Good Snowman is Hard to Build");
+        stage.show();
+        gameBoard.requestFocus();
+    }
+
+    private GameConfig showConfigDialog() {
+        Dialog<GameConfig> dialog = new Dialog<>();
         dialog.setTitle("Configuração do Jogo");
 
         Label nameLabel = new Label("Nome:");
@@ -90,19 +112,29 @@ public class GameStart extends Application {
         levelChoice.getItems().addAll(1, 2);
         levelChoice.setValue(1);
 
-        VBox dialogContent = new VBox(10, nameLabel, nameField, levelLabel, levelChoice);
+        Label levelDesignLabel = new Label("Estilo:");
+        javafx.scene.control.ChoiceBox<String> designChoice = new javafx.scene.control.ChoiceBox<>();
+        designChoice.getItems().addAll("Formas", "Imagens");
+        designChoice.setValue("Formas");
+
+        VBox dialogContent = new VBox(10, nameLabel, nameField, levelLabel, levelChoice, levelDesignLabel, designChoice );
         dialog.getDialogPane().setContent(dialogContent);
         dialog.getDialogPane().getButtonTypes().addAll(javafx.scene.control.ButtonType.OK);
 
         dialog.setResultConverter(btn -> {
             if (btn == javafx.scene.control.ButtonType.OK) {
-                return new javafx.util.Pair<>(nameField.getText(), levelChoice.getValue());
+                return new GameConfig(
+                        levelChoice.getValue(),
+                        nameField.getText().isEmpty() ? "Jogador" : nameField.getText(),
+                        designChoice.getValue()
+                );
             }
             return null;
         });
 
-        Optional<Pair<String, Integer>> result = dialog.showAndWait();
-        return result.orElse(new Pair<>("Jogador", 1));
+        Optional<GameConfig> result = dialog.showAndWait();
+        return result.orElse(new GameConfig(1, "Jogador", "Formas"));
+
     }
 
     private VBox createInfoPane(String playerName) {
@@ -115,7 +147,7 @@ public class GameStart extends Application {
         HBox monsterLegend = new HBox(5, new Circle(8, javafx.scene.paint.Color.RED), new Label("Monstro"));
         HBox snowLegend = new HBox(5, new Rectangle(16, 16, javafx.scene.paint.Color.WHITE), new Label("Neve"));
         HBox blockLegend = new HBox(5, new Rectangle(16, 16, javafx.scene.paint.Color.BLACK), new Label("Bloco"));
-        HBox arrowsLegend = new HBox(5, new Label("\u2190 \u2191 \u2192 \u2193"), new Label("Mover personagem"));
+        HBox arrowsLegend = new HBox(5, new Label("← ↑ → ↓"), new Label("Mover personagem"));
         HBox goalLegend = new HBox(5, new Label("🎯"), new Label("Construir o boneco de neve!"));
         legendBox.getChildren().addAll(snowballLegend, monsterLegend, snowLegend, blockLegend, arrowsLegend, goalLegend);
         VBox infoPane = new VBox(10, playerNameLabel, scoreLabel, leaderboardLabel, legendBox);
