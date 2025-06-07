@@ -18,19 +18,6 @@ public class GameModel {
     private Score score;
     private List<Score> scores = new ArrayList<>();
 
-    /*public GameModel(View view, String playerName) {
-        this.movesCount = 0;
-        this.view = view;
-        this.score = new Score(playerName, this.level, this.movesCount);
-        try {
-            this.boardModel.loadLevelFromFile(this.filename);
-            this.LoadScoresFromFile();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }*/
 
     public GameModel(View view, int level, String playerName) {
         this.view = view;
@@ -83,6 +70,7 @@ public class GameModel {
         if (this.boardModel.isPositionEmpty(newPos)) {
             this.monster.setPosition(newPos);
             this.boardModel.updateBoard();
+            moved = true;
         }
         SnowBall snowball = this.boardModel.getSnowballAt(newPos);
         if(snowball != null) moved = this.checkForSnowballs(snowball, newPos, direction);

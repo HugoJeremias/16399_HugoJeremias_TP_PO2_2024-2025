@@ -1,8 +1,10 @@
 // Autor: 16399 - Hugo Jeremias
 package pt.ipbeja.estig.po2.snowman.ui;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -31,6 +33,7 @@ public class ImageGameBoard extends GridPane implements View {
     private int lastRow = 2, lastCol = 2, movesCount = 0, level;
     private Node[][] cells;
     private String playerName;
+    private Image snowBallSmall, snowBallBigAverage, snowBallBigSmall, snowBallAverageSmall;
 
     /**
      * Constructor for the GameBoard class.
@@ -47,12 +50,19 @@ public class ImageGameBoard extends GridPane implements View {
         this.gameModel = new GameModel(this, this.level, this.playerName);
         this.cells = new Node[SIZE][SIZE];
         this.scoreLabel = scoreLabel;
+        loadImages();
         loadLevel();
         createNumberedGameBoard();
         setupKeyboardControls();
         this.updateBoard();
     }
 
+    public void loadImages() {
+        this.snowBallSmall = new Image(getClass().getResourceAsStream("/snowball.png"));
+        this.snowBallBigAverage = new Image(getClass().getResourceAsStream("/snowball_big_average.png"));
+        this.snowBallBigSmall = new Image(getClass().getResourceAsStream("/snowball_big_small.png"));
+        this.snowBallAverageSmall = new Image(getClass().getResourceAsStream("/snowball_average_small.png"));
+    }
 
     /**
      * Resets the visual labels and gameBoard for a new level.
@@ -161,7 +171,7 @@ public class ImageGameBoard extends GridPane implements View {
             StackPane cell = (StackPane) cells[snowman.getPosition().getRow()][snowman.getPosition().getCol()];
             generateSnowman(cell);
         }
-        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Jogo Completo");
         alert.setHeaderText(null);
         ButtonType closeBtn = new ButtonType("Fechar");
@@ -192,7 +202,7 @@ public class ImageGameBoard extends GridPane implements View {
                 setupKeyboardControls();
                 this.updateBoard();
             }
-            case "Fechar" -> javafx.application.Platform.exit();
+            case "Fechar" -> Platform.exit();
         }
     }
 
@@ -209,10 +219,11 @@ public class ImageGameBoard extends GridPane implements View {
     public void generateSnowBall(SnowBallType type, StackPane cell) {
         String imageName;
         double size;
+        ImageView imageView = null;
 
         switch (type) {
             case SMALL, AVERAGE, BIG -> {
-                imageName = "snowball.png";
+                imageView = new ImageView(this.snowBallSmall);
                 size = switch (type) {
                     case SMALL -> CELL_SIZE * 0.4;
                     case AVERAGE -> CELL_SIZE * 0.6;
@@ -221,25 +232,23 @@ public class ImageGameBoard extends GridPane implements View {
                 };
             }
             case BIG_AVERAGE -> {
-                imageName = "snowball_big_average.png";
+                imageView = new ImageView(this.snowBallBigAverage);
                 size = CELL_SIZE;
             }
             case BIG_SMAL -> {
-                imageName = "snowball_big_small.png";
+                imageView = new ImageView(this.snowBallBigSmall);
                 size = CELL_SIZE;
             }
             case AVERAGE_SMALL -> {
-                imageName = "snowball_average_small.png";
+                imageView = new ImageView(this.snowBallAverageSmall);
                 size = CELL_SIZE;
             }
             default -> {
-                imageName = "snowball.png";
+                imageView = new ImageView(this.snowBallSmall);
                 size = CELL_SIZE * 0.4;
             }
         }
 
-        Image img = new Image(getClass().getResourceAsStream("/" + imageName));
-        ImageView imageView = new ImageView(img);
         imageView.setFitWidth(size);
         imageView.setFitHeight(size);
         cell.getChildren().add(imageView);

@@ -132,9 +132,7 @@ public class BoardModel {
         return null;
     }
 
-    public boolean hasSnowballAt(Position position) {
-        return getSnowballAt(position) != null;
-    }
+    public boolean hasSnowballAt(Position position) { return getSnowballAt(position) != null; }
 
     public boolean isPositionEmpty(Position position) {
         if (!isValidPosition(position)) return false;
