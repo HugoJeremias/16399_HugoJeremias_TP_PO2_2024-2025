@@ -17,35 +17,20 @@ import javafx.util.Pair;
 import java.util.Optional;
 
 
+/**
+ * Main class to start the Snowman game application.
+ * It initializes the game configuration, creates the game board,
+ * and sets up the user interface.
+ */
 public class GameStart extends Application {
+    /**
+     * Starts the JavaFX application.
+     * It shows a configuration dialog to get the player's name, level, and level style,
+     * then initializes the game board based on the selected options.
+     *
+     * @param stage the primary stage for this application
+     */
     @Override
-    /*public void start(Stage stage) {
-
-        int level = showLevelSelectionDialog(stage);
-
-        Label movesLabel = new Label("Jogadas:");
-        movesLabel.setWrapText(true);
-
-        VBox contentBox = new VBox(movesLabel);
-        contentBox.setFillWidth(true);
-
-        ScrollPane scrollPane = new ScrollPane(contentBox);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefHeight(100);
-
-        GameBoard gameBoard = new GameBoard(movesLabel, level); // Adiciona o nível ao construtor
-
-        VBox root = new VBox();
-        root.getChildren().addAll(gameBoard, scrollPane);
-
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.setTitle("A Good Snowman is Hard to Build");
-        stage.show();
-
-        gameBoard.requestFocus();
-
-    }*/
     public void start(Stage stage) {
         GameConfig config = showConfigDialog();
         String playerName = config.getPlayerName();
@@ -56,18 +41,27 @@ public class GameStart extends Application {
         ScrollPane scrollPane = createMovesPane();
         Label movesLabel = (Label) ((VBox) scrollPane.getContent()).getChildren().get(0);
         Label scoreLabel = (Label) infoPane.getChildren().get(1);
-        Label leaderboardLabel = (Label) infoPane.getChildren().get(2);
+        Label leaderBoardLabel = (Label) infoPane.getChildren().get(2);
 
         if(levelStyle == null || levelStyle.equals("Formas")) {
-            GameBoard gameBoard = new GameBoard(movesLabel, level, scoreLabel, leaderboardLabel, playerName);
+            GameBoard gameBoard = new GameBoard(movesLabel, level, scoreLabel, leaderBoardLabel, playerName);
             showGameBoard(gameBoard, infoPane, scrollPane, stage);
         }
         else {
-            ImageGameBoard gameBoard = new ImageGameBoard(movesLabel, level, scoreLabel, playerName);
+            ImageGameBoard gameBoard = new ImageGameBoard(movesLabel, level, scoreLabel, leaderBoardLabel, playerName);
             showImageGameBoard(gameBoard, infoPane, scrollPane, stage);
         }
     }
 
+    /**
+     * Displays the game board with the specified configuration.
+     * It sets up the layout with the game board on the left and the info pane on the right.
+     *
+     * @param gameBoard the game board to display
+     * @param infoPane the pane containing player information and game stats
+     * @param scrollPane the scroll pane for displaying moves
+     * @param stage the primary stage for this application
+     */
     private void showImageGameBoard(ImageGameBoard gameBoard, VBox infoPane, ScrollPane scrollPane, Stage stage) {
 
         VBox leftPane = new VBox(gameBoard, scrollPane);
@@ -81,6 +75,15 @@ public class GameStart extends Application {
         gameBoard.requestFocus();
     }
 
+    /**
+     * Displays the game board with the specified configuration.
+     * It sets up the layout with the game board on the left and the info pane on the right.
+     *
+     * @param gameBoard the game board to display
+     * @param infoPane the pane containing player information and game stats
+     * @param scrollPane the scroll pane for displaying moves
+     * @param stage the primary stage for this application
+     */
     private void showGameBoard(GameBoard gameBoard, VBox infoPane, ScrollPane scrollPane, Stage stage) {
         VBox leftPane = new VBox(gameBoard, scrollPane);
         leftPane.setMaxWidth(400);
@@ -93,6 +96,12 @@ public class GameStart extends Application {
         gameBoard.requestFocus();
     }
 
+    /**
+     * Shows a dialog to configure the game settings.
+     * It allows the player to enter their name, select a level, and choose a design style.
+     *
+     * @return a GameConfig object containing the player's name, level, and design style
+     */
     private GameConfig showConfigDialog() {
         Dialog<GameConfig> dialog = new Dialog<>();
         dialog.setTitle("Configuração do Jogo");
@@ -137,6 +146,12 @@ public class GameStart extends Application {
 
     }
 
+    /**
+     * Creates a pane to display player information, score, and game legend.
+     *
+     * @param playerName the name of the player
+     * @return a VBox containing the player information and game legend
+     */
     private VBox createInfoPane(String playerName) {
         Label playerNameLabel = new Label("Jogador: " + playerName);
         Label scoreLabel = new Label("Pontuação: ");
@@ -155,6 +170,12 @@ public class GameStart extends Application {
         return infoPane;
     }
 
+    /**
+     * Creates a scroll pane to display the moves made by the player.
+     * It contains a label that will be updated with the moves.
+     *
+     * @return a ScrollPane containing the moves label
+     */
     private ScrollPane createMovesPane() {
         Label movesLabel = new Label("Jogadas:");
         movesLabel.setWrapText(true);
@@ -166,16 +187,14 @@ public class GameStart extends Application {
         return scrollPane;
     }
 
+    /**
+     * Main method to launch the JavaFX application.
+     * It initializes the JavaFX runtime and starts the application.
+     *
+     * @param args command line arguments (not used)
+     */
     public static void main(String[] args) {
         launch();
     }
 
-    private int showLevelSelectionDialog(Stage stage) {
-        javafx.scene.control.ChoiceDialog<Integer> dialog = new javafx.scene.control.ChoiceDialog<>(1, 1, 2);
-        dialog.setTitle("Selecionar Nível");
-        dialog.setHeaderText("Escolha o nível para jogar:");
-        dialog.setContentText("Nível:");
-        Optional<Integer> result = dialog.showAndWait();
-        return result.orElse(1);
-    }
 }

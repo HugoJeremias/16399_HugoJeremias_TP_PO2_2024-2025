@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class GameModel {
     private final View view;
@@ -17,6 +18,8 @@ public class GameModel {
     private Monster monster;
     private Score score;
     private List<Score> scores = new ArrayList<>();
+    private final Stack<Move> undoStack = new Stack<>();
+    private final Stack<Move> redoStack = new Stack<>();
 
 
     public GameModel(View view, int level, String playerName) {
@@ -57,8 +60,13 @@ public class GameModel {
 
      public boolean moveMonster(Direction direction) throws IOException {
         this.monster = this.boardModel.getMonster();
-        Position currentPos = this.monster.getPosition();
-        Position newPos = currentPos.getPositionAt(direction);
+        Position currentMonsterPos = this.monster.getPosition();
+         List<SnowBall> oldSnowballs = this.boardModel.getSnowballs()
+                 .stream()
+                 .map(SnowBall::copy)
+                 .toList();
+        List<List<PositionContent>> oldBoard = this.boardModel.deepCopyBoard();
+        Position newPos = currentMonsterPos.getPositionAt(direction);
         boolean moved = false;
 
         if (!this.boardModel.isValidPosition(newPos)) return false;
@@ -75,10 +83,22 @@ public class GameModel {
         SnowBall snowball = this.boardModel.getSnowballAt(newPos);
         if(snowball != null) moved = this.checkForSnowballs(snowball, newPos, direction);
 
-        if (moved && this.isGameComplete()) {
-            view.showGameCompleteMessage(true, this.boardModel.getSnowmen().get(0));
-        }
+        if (moved && this.isGameComplete()) view.showGameCompleteMessage(true, this.boardModel.getSnowmen().get(0));
+
+        undoStack.push(getMoveInformation(currentMonsterPos, oldSnowballs, oldBoard));
+        redoStack.clear();
         return moved;
+    }
+
+    private Move getMoveInformation(Position currentPos, List<SnowBall> oldSnowBalls, List<List<PositionContent>> oldBoard) {
+        return new Move(
+                this.monster.getPosition(),
+                currentPos,
+                oldBoard,
+                this.boardModel.getBoard(),
+                oldSnowBalls,
+                new ArrayList<>(this.boardModel.getSnowballs())
+        );
     }
 
 
@@ -91,7 +111,7 @@ public class GameModel {
         if (this.boardModel.getPositionContent(nextPos.getRow(), nextPos.getCol()) == PositionContent.BLOCK) return false;
 
         SnowBall target = this.boardModel.getSnowballAt(nextPos);
-        if (target != null) return this.handleStackOrBlock(snowball, target, newPos);
+        if (target != null) return this.handleStack(snowball, target, newPos);
 
         if (this.boardModel.getPositionContent(nextPos.getRow(), nextPos.getCol()) == PositionContent.SNOW) snowball.grow();
 
@@ -130,7 +150,7 @@ public class GameModel {
         return false;
     }
 
-    private boolean handleStackOrBlock(SnowBall snowball, SnowBall target, Position newPos) {
+    private boolean handleStack(SnowBall snowball, SnowBall target, Position newPos) {
         if (snowball.getType().isSmallerThan(target.getType()) ||
                 (target.getType() == SnowBallType.BIG_AVERAGE && snowball.getType() == SnowBallType.SMALL)) {
             stackSnowballs(target, snowball);
@@ -257,5 +277,40 @@ public class GameModel {
         return sb.toString();
     }
 
+    public void undo() {
+        if (!undoStack.isEmpty()) {
+            Move lastMove = undoStack.pop();
+            redoStack.push(lastMove);
+            this.monster.setPosition(lastMove.getOldMonsterPosition());
+            boardModel.setBoard(lastMove.getOldBoard());
+            boardModel.setSnowballs(lastMove.getOldSnowballs());
+            this.movesCount--;
+            this.view.updateMovesCount(this.movesCount);
+            boardModel.updateBoard();
+        }
+    }
+
+    public void redo() {
+        if (!redoStack.isEmpty()) {
+            Move lastMove = redoStack.pop();
+            undoStack.push(lastMove);
+            this.monster.setPosition(lastMove.getNewMonsterPosition());
+            this.boardModel.setBoard(lastMove.getNewBoard());
+            this.boardModel.setSnowballs(lastMove.getNewSnowballs());
+            this.movesCount++;
+            this.view.updateMovesCount(this.movesCount);
+            this.view.updateBoard();
+        }
+    }
+
+    public boolean isTopScore(int movesCount) {
+        if (this.scores.isEmpty()) return true;
+
+        this.scores.add(this.score);
+
+        this.scores.sort(Score::compareTo);
+
+        return this.scores.indexOf(this.score) < 5;
+    }
 }
 

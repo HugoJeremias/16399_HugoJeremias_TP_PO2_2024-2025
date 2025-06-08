@@ -52,4 +52,7 @@ public class SnowBall extends MobileElement{
     public void setType(SnowBallType snowBallType) {
         this.type = snowBallType;
     }
+    public SnowBall copy() {
+        return new SnowBall(new Position(this.getPosition().getRow(), this.getPosition().getCol()), this.type);
+    }
 }

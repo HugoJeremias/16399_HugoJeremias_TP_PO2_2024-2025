@@ -11,9 +11,17 @@ Requisitos Essenciais Cumpridos:
             Dei a hipótese ao jogador de selecionar o estilo que preferir.
 
  Requisitos Não Essenciais Cumpridos:
- 
+ - Req. 7 - Apresentação de Pontuação (2,0 valores)
+ - Req. 8 - Leitura de Níveis (2,0 valores)
+ - Req. 9 - Música de fundo (1,0 valores)
+ - Req. 10 - Undo e Redo (2,0 valores)
+ - Req. Opt. 1 - Escolha de entre vários aspetos gráficos para a interfce ("interface skins")
+           - Inadvertidamente foi cumprido por aquilo que exponho no Req. Essencial 6.
+ - Req. Opt. 2 - Reinicio do próprio nível.
 
+ Classificação: 17 valores
 
+Uma melhoria imediata que deveria ser implementada, seria criar uma classe adicional onde colocar os métodos partilhados pelo GameBoard e pelo ImageGameBoard.
+Alguns dos métodos têm mais de 20 pontos e vírgulas.
 
-
- Classificação: 10 valores
+Classificação Corrigida: 14 valores.

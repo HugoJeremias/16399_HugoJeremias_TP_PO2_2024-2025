@@ -4,14 +4,16 @@ package pt.ipbeja.estig.po2.snowman.ui;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import pt.ipbeja.estig.po2.snowman.model.*;
@@ -29,11 +31,13 @@ import java.util.Optional;
 public class ImageGameBoard extends GridPane implements View {
     private GameModel gameModel;
     private static final int SIZE = 5, CELL_SIZE = 100;
-    private final Label movesLabel, scoreLabel;
+    private final Label movesLabel, scoreLabel, leaderBoardLabel;
     private int lastRow = 2, lastCol = 2, movesCount = 0, level;
     private Node[][] cells;
-    private String playerName;
-    private Image snowBallSmall, snowBallBigAverage, snowBallBigSmall, snowBallAverageSmall;
+    private final String playerName;
+    private Image snowBallSmall, snowBallBigAverage, snowBallBigSmall,
+            snowBallAverageSmall, blockImage, groundImage, snowImage,
+            snowmanImage, monsterImage;
 
     /**
      * Constructor for the GameBoard class.
@@ -42,26 +46,54 @@ public class ImageGameBoard extends GridPane implements View {
      * @param movesLabel the label to display the number of moves made
      * @param level the current level of the game
      * @param scoreLabel the label to display the score
+     * @param leaderBoardLabel the label to display the leaderboard
+     * @param playerName the name of the player
      */
-    public ImageGameBoard(Label movesLabel, int level, Label scoreLabel, String playerName) {
+    public ImageGameBoard(Label movesLabel, int level, Label scoreLabel, Label leaderBoardLabel, String playerName) {
         this.movesLabel = movesLabel;
         this.playerName = playerName;
         this.level = level;
         this.gameModel = new GameModel(this, this.level, this.playerName);
         this.cells = new Node[SIZE][SIZE];
         this.scoreLabel = scoreLabel;
+        this.leaderBoardLabel = leaderBoardLabel;
         loadImages();
+        loadMusic();
         loadLevel();
         createNumberedGameBoard();
-        setupKeyboardControls();
+        createButtonBox();
+        KeyboardControls();
         this.updateBoard();
     }
 
+    /**
+     * Loads the images used in the game board.
+     * The images are loaded from the resources directory.
+     */
     public void loadImages() {
         this.snowBallSmall = new Image(getClass().getResourceAsStream("/snowball.png"));
         this.snowBallBigAverage = new Image(getClass().getResourceAsStream("/snowball_big_average.png"));
         this.snowBallBigSmall = new Image(getClass().getResourceAsStream("/snowball_big_small.png"));
         this.snowBallAverageSmall = new Image(getClass().getResourceAsStream("/snowball_average_small.png"));
+        this.blockImage = new Image(getClass().getResourceAsStream("/block.png"));
+        this.groundImage = new Image(getClass().getResourceAsStream("/ground.png"));
+        this.snowImage = new Image(getClass().getResourceAsStream("/snow.png"));
+        this.snowmanImage = new Image(getClass().getResourceAsStream("/snowman.png"));
+        this.monsterImage = new Image(getClass().getResourceAsStream("/monster.png"));
+    }
+
+    /**
+     * Loads the background music for the game.
+     * The music is played in a loop indefinitely.
+     */
+    private void loadMusic() {
+        String musicFile = getClass().getResource("/soundtrack.mp3").toExternalForm();
+        Media media = new Media(musicFile);
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+
+
+        mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+        mediaPlayer.play();
     }
 
     /**
@@ -74,6 +106,7 @@ public class ImageGameBoard extends GridPane implements View {
         this.movesCount = 0;
         this.lastRow = monsterPosition.getRow();
         this.lastCol = monsterPosition.getCol();
+        this.leaderBoardLabel.setText(this.getTopFiveScores());
     }
 
     /**
@@ -107,10 +140,122 @@ public class ImageGameBoard extends GridPane implements View {
     }
 
     /**
+     * Creates a button box with undo, redo, change level, and close buttons.
+     * Each button has an action associated with it.
+     */
+    private void createButtonBox() {
+        Button undoButton = new Button("⟲");
+        Button redoButton = new Button("⟳");
+        Button changeLevelButton = new Button("Mudar Nível");
+        Button closeButton = new Button("Reiniciar nível atual");
+
+        // Add button actions
+        undoButton.setOnAction(e -> this.undo());
+        redoButton.setOnAction(e -> this.redo());
+        changeLevelButton.setOnAction(e -> changeLevel());
+        closeButton.setOnAction(e -> restartLevel());
+
+        HBox buttonBox = new HBox(10, undoButton, redoButton, changeLevelButton, closeButton);
+        buttonBox.setStyle("-fx-padding: 10; -fx-alignment: bottom-right;");
+        this.getChildren().add(buttonBox);
+    }
+
+    /**
+     * Restarts the current level by reinitializing the game model and updating the board.
+     * This method is called when the player chooses to restart the level.
+     */
+    private void restartLevel() {
+        this.gameModel = new GameModel(this, this.level, this.playerName);
+        this.cells = new Node[SIZE][SIZE];
+        loadLevel();
+        createNumberedGameBoard();
+        createButtonBox();
+        KeyboardControls();
+        this.updateBoard();
+    }
+
+    /**
+     * Changes the level of the game by displaying a dialog to select the new level.
+     * If the user confirms, it updates the game model and reloads the level.
+     */
+    private void changeLevel() {
+        Alert dialog = createLevelChangeDialog();
+        Optional<ButtonType> result = dialog.showAndWait();
+        handleLevelChangeResult(result, getLevelChoiceBox(dialog), dialog);
+    }
+
+    /**
+     * Creates a dialog for changing the level of the game.
+     * The dialog contains a choice box to select the new level and buttons to confirm or close the dialog.
+     *
+     * @return an Alert dialog for changing the level
+     */
+    private Alert createLevelChangeDialog() {
+        Alert dialog = new Alert(Alert.AlertType.INFORMATION);
+        dialog.setTitle("Mudar de nível");
+        dialog.setHeaderText(null);
+
+        ButtonType okButton = new ButtonType("Ok");
+        ButtonType closeButton = new ButtonType("Fechar");
+        dialog.getButtonTypes().setAll(okButton, closeButton);
+
+        Label levelLabel = new Label("Nível:");
+        ChoiceBox<Integer> levelChoice = new ChoiceBox<>();
+        levelChoice.getItems().addAll(1, 2);
+        levelChoice.setValue(1);
+
+        VBox content = new VBox(levelLabel, levelChoice);
+        dialog.getDialogPane().setContent(content);
+
+        return dialog;
+    }
+
+    /**
+     * Retrieves the level choice box from the dialog.
+     * This method is used to get the selected level when the user confirms the dialog.
+     *
+     * @param dialog the Alert dialog containing the choice box
+     * @return the ChoiceBox containing the level options
+     */
+    private ChoiceBox<Integer> getLevelChoiceBox(Alert dialog) {
+        VBox content = (VBox) dialog.getDialogPane().getContent();
+        return (ChoiceBox<Integer>) content.getChildren().get(1);
+    }
+
+    /**
+     * Handles the result of the level change dialog.
+     * If the user confirms, it updates the game model and reloads the level.
+     * If the user closes the dialog, it simply closes the dialog.
+     *
+     * @param result the result of the dialog
+     * @param levelChoice the choice box containing the selected level
+     * @param dialog the Alert dialog
+     */
+    public void handleLevelChangeResult(Optional<ButtonType> result, javafx.scene.control.ChoiceBox<Integer> levelChoice, Alert dialog) {
+        if(result.isPresent()) {
+            String btn = result.get().getText();
+            if(btn.equals("Ok")) {
+                this.level = levelChoice.getValue();
+                this.gameModel = new GameModel(this, this.level, this.playerName);
+                this.cells = new Node[SIZE][SIZE];
+                loadLevel();
+                createNumberedGameBoard();
+                createButtonBox();
+                KeyboardControls();
+                this.updateBoard();
+            }
+            else if(btn.equals("Fechar")) {
+                dialog.close();
+            }
+        }
+    }
+
+
+    /**
      * Sets up keyboard controls for the game board.
      * Allows the player to move the monster using arrow keys.
      */
-    private void setupKeyboardControls() {
+    private void KeyboardControls() {
         this.setFocusTraversable(true);
         this.requestFocus();
         this.setOnKeyPressed(event -> {
@@ -145,7 +290,7 @@ public class ImageGameBoard extends GridPane implements View {
         int newRow = this.getMonster().getPosition().getRow();
         int newCol = this.getMonster().getPosition().getCol();
         this.updateMovesValue(lastRow, lastCol, newRow, newCol);
-        this.scoreLabel.setText("Pontuação: " + (100 - movesCount));
+        this.scoreLabel.setText("Pontuação: " + movesCount);
         movesLabel.setText(movesLabel.getText() + " " + this.updateMovesValue(lastRow, lastCol, newRow, newCol));
         this.lastRow = newRow;
         this.lastCol = newCol;
@@ -171,12 +316,13 @@ public class ImageGameBoard extends GridPane implements View {
             StackPane cell = (StackPane) cells[snowman.getPosition().getRow()][snowman.getPosition().getCol()];
             generateSnowman(cell);
         }
+        String isTopScore = isTopScore(this.movesCount) ? " TOP!!" : "";
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Jogo Completo");
         alert.setHeaderText(null);
         ButtonType closeBtn = new ButtonType("Fechar");
         alert.getButtonTypes().setAll(closeBtn, new ButtonType("Recomeçar"), new ButtonType("Novo Nível"));
-        alert.setContentText(gameWon ? "Vitória!\nPontuação: " + (100 - this.movesCount) + " pontos" : "Game Over.");
+        alert.setContentText(gameWon ? "Vitória!\nPontuação: " + this.movesCount + " pontos" + isTopScore: "Game Over.");
         Optional<ButtonType> result = alert.showAndWait();
         if(result.isPresent()) {
             String btn = result.get().getText();
@@ -192,14 +338,23 @@ public class ImageGameBoard extends GridPane implements View {
      */
     public void gameCompletionOption(String btn) {
         switch (btn) {
-            case "Recomeçar" -> loadLevel();
+            case "Recomeçar" -> {
+                this.gameModel = new GameModel(this, this.level, this.playerName);
+                this.cells = new Node[SIZE][SIZE];
+                loadLevel();
+                createNumberedGameBoard();
+                createButtonBox();
+                KeyboardControls();
+                this.updateBoard();
+            }
             case "Novo Nível" -> {
                 this.level++;
                 this.gameModel = new GameModel(this, this.level, this.playerName);
                 this.cells = new Node[SIZE][SIZE];
                 loadLevel();
                 createNumberedGameBoard();
-                setupKeyboardControls();
+                createButtonBox();
+                KeyboardControls();
                 this.updateBoard();
             }
             case "Fechar" -> Platform.exit();
@@ -261,8 +416,7 @@ public class ImageGameBoard extends GridPane implements View {
      * @param cell the cell where the monster will be added
      */
     private void generateMonster(StackPane cell) {
-        Image img = new Image(getClass().getResourceAsStream("/monster.png"));
-        ImageView imageView = new ImageView(img);
+        ImageView imageView = new ImageView(this.monsterImage);
         imageView.setFitWidth(CELL_SIZE * 0.8);
         imageView.setFitHeight(CELL_SIZE * 0.8);
         cell.getChildren().add(imageView);
@@ -276,9 +430,7 @@ public class ImageGameBoard extends GridPane implements View {
      * @param cell the cell where the snowman will be added
      */
     public void generateSnowman(StackPane cell) {
-        Image base = new Image(getClass().getResourceAsStream("/snowman.png"));
-
-        ImageView baseView = new ImageView(base);
+        ImageView baseView = new ImageView(this.snowmanImage);
         baseView.setFitWidth(CELL_SIZE);
         baseView.setFitHeight(CELL_SIZE);
 
@@ -294,13 +446,11 @@ public class ImageGameBoard extends GridPane implements View {
      * @param content the content type of the position
      */
     private void setCellBackground(StackPane cell, PositionContent content) {
-        String imageName = switch (content) {
-            case SNOW -> "snow.png";
-            case BLOCK -> "block.png";
-            default -> "ground.png";
+        ImageView imageView = switch (content) {
+            case SNOW -> new ImageView(this.snowImage);
+            case BLOCK -> new ImageView(this.blockImage);
+            default -> new ImageView(this.groundImage);
         };
-        Image img = new Image(getClass().getResourceAsStream("/" + imageName));
-        ImageView imageView = new ImageView(img);
         imageView.setFitWidth(CELL_SIZE);
         imageView.setFitHeight(CELL_SIZE);
         cell.getChildren().add(imageView);
@@ -437,14 +587,60 @@ public class ImageGameBoard extends GridPane implements View {
         return gameModel.moveMonster(direction);
     }
 
+    /**
+     * Updates the moves count in the game model.
+     * This method is called to keep track of the number of moves made by the player.
+     *
+     * @param movesCount the current number of moves made
+     */
     @Override
     public void updateMovesCount(int movesCount) {
         gameModel.setMovesCount(movesCount);
     }
 
+    /**
+     * Returns the top five scores of the current level from the game model.
+     * This method retrieves the leaderboard information.
+     *
+     * @return a string representing the top five scores
+     */
     @Override
     public String getTopFiveScores() {
         return gameModel.getTopFiveScores();
+    }
+
+    /**
+     * Undoes the last move made in the game.
+     * This method interacts with the GameModel to revert the last action and update the board.
+     */
+    @Override
+    public void undo() {
+        gameModel.undo();
+        this.updateBoard();
+        KeyboardControls();
+    }
+
+    /**
+     * Redoes the last undone move in the game.
+     * This method interacts with the GameModel to reapply the last action and update the board.
+     */
+    @Override
+    public void redo() {
+        gameModel.redo();
+        this.updateBoard();
+        KeyboardControls();
+    }
+
+    /**
+     * Checks if the current moves count is a top score.
+     * This method interacts with the GameModel to determine if the player's score qualifies as a top score.
+     *
+     * @param movesCount the number of moves made by the player
+     * @return true if the moves count is a top score, false otherwise
+     */
+    @Override
+    public boolean isTopScore(int movesCount) {
+        return gameModel.isTopScore(movesCount);
     }
 }
 

@@ -3,14 +3,17 @@ package pt.ipbeja.estig.po2.snowman.ui;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import pt.ipbeja.estig.po2.snowman.model.*;
 import java.io.IOException;
 import java.util.List;
@@ -51,11 +54,26 @@ public class GameBoard extends GridPane implements View {
         this.scoreLabel = scoreLabel;
         this.leaderBoardLabel = leaderBoardLabel;
         loadLevel();
+        loadMusic();
         createNumberedGameBoard();
+        createButtonBox();
         KeyboardControls();
         this.updateBoard();
     }
 
+    /**
+     * Loads the background music for the game.
+     * The music is played in a loop indefinitely.
+     */
+    private void loadMusic() {
+        String musicFile = getClass().getResource("/soundtrack.mp3").toExternalForm();
+        Media media = new Media(musicFile);
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+
+
+        mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+        mediaPlayer.play();
+    }
 
     /**
      * Resets the visual labels and gameBoard for a new level.
@@ -68,6 +86,135 @@ public class GameBoard extends GridPane implements View {
         this.lastRow = monsterPosition.getRow();
         this.lastCol = monsterPosition.getCol();
         this.leaderBoardLabel.setText(this.getTopFiveScores());
+    }
+
+    private void createButtonBox() {
+        Button undoButton = new Button("⟲");
+        Button redoButton = new Button("⟳");
+        Button changeLevelButton = new Button("Mudar Nível");
+        Button closeButton = new Button("Recomeçar Nível atual");
+
+        // Add button actions
+        undoButton.setOnAction(e -> this.undo());
+        redoButton.setOnAction(e -> this.redo());
+        changeLevelButton.setOnAction(e -> changeLevel());
+        closeButton.setOnAction(e -> restartLevel());
+
+        HBox buttonBox = new HBox(10, undoButton, redoButton, changeLevelButton, closeButton);
+        buttonBox.setStyle("-fx-padding: 10; -fx-alignment: bottom-right;");
+        this.getChildren().add(buttonBox);
+    }
+
+    /**
+     * Restarts the current level by reinitializing the game model and updating the game board.
+     * This method is called when the player chooses to restart the level.
+     */
+    private void restartLevel() {
+        this.gameModel = new GameModel(this, this.level, this.playerName);
+        this.cells = new Node[SIZE][SIZE];
+        loadLevel();
+        createNumberedGameBoard();
+        createButtonBox();
+        KeyboardControls();
+        this.updateBoard();
+    }
+
+    /**
+     * Undoes the last move made by the player.
+     * This method interacts with the GameModel to revert the game state to the previous state.
+     */
+    @Override
+    public void undo() {
+        gameModel.undo();
+        this.updateBoard();
+        KeyboardControls();
+    }
+
+    /**
+     * Redoes the last undone move made by the player.
+     * This method interacts with the GameModel to restore the game state to the next state.
+     */
+    @Override
+    public void redo() {
+        gameModel.redo();
+        this.updateBoard();
+        KeyboardControls();
+    }
+
+    /**
+     * Prompts the user to change the game level.
+     * Displays a dialog with a choice box for selecting the level.
+     * If the user confirms, it updates the game model and reloads the game board.
+     */
+    private void changeLevel() {
+        Alert dialog = createLevelChangeDialog();
+        Optional<ButtonType> result = dialog.showAndWait();
+        handleLevelChangeResult(result, getLevelChoiceBox(dialog), dialog);
+    }
+
+    /**
+     * Creates a dialog for changing the game level.
+     * The dialog contains a choice box for selecting the level and buttons for confirmation.
+     *
+     * @return an Alert dialog for changing the level
+     */
+    private Alert createLevelChangeDialog() {
+        Alert dialog = new Alert(Alert.AlertType.INFORMATION);
+        dialog.setTitle("Mudar de nível");
+        dialog.setHeaderText(null);
+
+        ButtonType okButton = new ButtonType("Ok");
+        ButtonType closeButton = new ButtonType("Fechar");
+        dialog.getButtonTypes().setAll(okButton, closeButton);
+
+        Label levelLabel = new Label("Nível:");
+        ChoiceBox<Integer> levelChoice = new ChoiceBox<>();
+        levelChoice.getItems().addAll(1, 2);
+        levelChoice.setValue(1);
+
+        VBox content = new VBox(levelLabel, levelChoice);
+        dialog.getDialogPane().setContent(content);
+
+        return dialog;
+    }
+
+    /**
+     * Retrieves the choice box for selecting the level from the dialog.
+     *
+     * @param dialog the Alert dialog containing the choice box
+     * @return the ChoiceBox for selecting the level
+     */
+    private ChoiceBox<Integer> getLevelChoiceBox(Alert dialog) {
+        VBox content = (VBox) dialog.getDialogPane().getContent();
+        return (ChoiceBox<Integer>) content.getChildren().get(1);
+    }
+
+    /**
+     * Handles the result of the level change dialog.
+     * If the user confirms, it updates the game model and reloads the game board.
+     * If the user closes the dialog, it simply closes it without making changes.
+     *
+     * @param result the result of the dialog
+     * @param levelChoice the choice box containing the selected level
+     * @param dialog the Alert dialog
+     */
+    public void handleLevelChangeResult(Optional<ButtonType> result, javafx.scene.control.ChoiceBox<Integer> levelChoice, Alert dialog) {
+        if(result.isPresent()) {
+            String btn = result.get().getText();
+            if(btn.equals("Ok")) {
+                this.level = levelChoice.getValue();
+                this.gameModel = new GameModel(this, this.level, this.playerName);
+                this.cells = new Node[SIZE][SIZE];
+                loadLevel();
+                createNumberedGameBoard();
+                createButtonBox();
+                KeyboardControls();
+                this.updateBoard();
+            }
+            else if(btn.equals("Fechar")) {
+                dialog.close();
+            }
+        }
     }
 
     /**
@@ -118,14 +265,13 @@ public class GameBoard extends GridPane implements View {
             } else if (event.getCode() == KeyCode.RIGHT) {
                 direction = Direction.RIGHT;
             }
-            assert direction != null;
-            try {
-                this.moveMonster(direction);
-                updateMovesInformation();
-            } catch (IOException e) {
-                e.printStackTrace();
+            if(direction != null) {
+                try {
+                    if (this.moveMonster(direction)) updateMovesInformation();
+                } catch (IOException e) {
+                    System.out.println("Invalid Input. Ignoring...");
+                }
             }
-
         });
     }
 
@@ -137,7 +283,6 @@ public class GameBoard extends GridPane implements View {
         this.movesCount++;
         int newRow = this.getMonster().getPosition().getRow();
         int newCol = this.getMonster().getPosition().getCol();
-        this.updateMovesValue(lastRow, lastCol, newRow, newCol);
         this.scoreLabel.setText("Pontuação: " + movesCount);
         this.movesLabel.setText(this.movesLabel.getText() + " " + this.updateMovesValue(this.lastRow, this.lastCol, newRow, newCol));
         this.lastRow = newRow;
@@ -164,12 +309,13 @@ public class GameBoard extends GridPane implements View {
             StackPane cell = (StackPane) cells[snowman.getPosition().getRow()][snowman.getPosition().getCol()];
             generateSnowman(cell);
         }
-        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        String isTopScore = isTopScore(this.movesCount) ? " TOP!!" : "";
+        Alert alert = new javafx.scene.control.Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Jogo Completo");
         alert.setHeaderText(null);
         ButtonType closeBtn = new ButtonType("Fechar");
         alert.getButtonTypes().setAll(closeBtn, new ButtonType("Recomeçar"), new ButtonType("Novo Nível"));
-        alert.setContentText(gameWon ? "Vitória!\nPontuação: " + this.movesCount + " pontos" : "Game Over.");
+        alert.setContentText(gameWon ? "Vitória!\nPontuação: " + this.movesCount + " pontos" + isTopScore : "Game Over.");
         Optional<ButtonType> result = alert.showAndWait();
         if(result.isPresent()) {
             String btn = result.get().getText();
@@ -190,6 +336,7 @@ public class GameBoard extends GridPane implements View {
                 this.cells = new Node[SIZE][SIZE];
                 loadLevel();
                 createNumberedGameBoard();
+                createButtonBox();
                 KeyboardControls();
                 this.updateBoard();
             }
@@ -199,6 +346,7 @@ public class GameBoard extends GridPane implements View {
                 this.cells = new Node[SIZE][SIZE];
                 loadLevel();
                 createNumberedGameBoard();
+                createButtonBox();
                 KeyboardControls();
                 this.updateBoard();
             }
@@ -459,15 +607,38 @@ public class GameBoard extends GridPane implements View {
         return gameModel.moveMonster(direction);
     }
 
+    /**
+     * Updates the moves count in the game model.
+     * This method is called to keep track of the number of moves made by the player.
+     *
+     * @param movesCount the number of moves made by the player
+     */
     @Override
     public void updateMovesCount(int movesCount) {
         gameModel.setMovesCount(movesCount);
     }
 
+    /**
+     * Returns the top five scores for the current level from the game model.
+     * This method retrieves the top scores and formats them for display.
+     *
+     * @return a string containing the top five scores
+     */
     @Override
     public String getTopFiveScores() {
         return gameModel.getTopFiveScores();
     }
 
+    /**
+     * Checks if the current moves count is a top score.
+     * This method interacts with the GameModel to determine if the moves count qualifies as a top score.
+     *
+     * @param movesCount the number of moves made by the player
+     * @return true if the moves count is a top score, false otherwise
+     */
+    @Override
+    public boolean isTopScore(int movesCount) {
+        return gameModel.isTopScore(movesCount);
+    }
 }
 

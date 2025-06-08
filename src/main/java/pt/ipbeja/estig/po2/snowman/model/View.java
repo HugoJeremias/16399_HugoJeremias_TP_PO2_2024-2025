@@ -20,12 +20,10 @@ public interface View {
      * @return returns the Node representing the game board element
      */
     Node generateElement(int row, int col);
-
     /**
-     * Updates the game board UI.
+     * Updates the game board.
      */
     void updateBoard();
-
     /**
      * Shows a message indicating whether the game is complete and if it was won or lost.
      *
@@ -33,14 +31,12 @@ public interface View {
      * @param snowman the Snowman object representing the snowman in the game
      */
     void showGameCompleteMessage(boolean gameWon, Snowman snowman);
-
     /**
      * Returns the current monster in the game.
      *
      * @return the monster
      */
     Monster getMonster();
-
     /**
      * Checks if there is a snowman at the specified position.
      * @param pos the position to check
@@ -48,7 +44,6 @@ public interface View {
      * @return true if there is a snowman at the position, false otherwise
      */
     Boolean hasSnowman(Position pos, double cellSize);
-
     /**
      * Returns the positionContent at the specified row and column.
      *
@@ -57,14 +52,12 @@ public interface View {
      * @return the content of the position
      */
     PositionContent getPositionContent(int row, int col);
-
     /**
      * Returns a list of snowballs in the game.
      *
      * @return a list of SnowBall objects
      */
     List<SnowBall> getSnowballs();
-
     /**
      * Updates the string that shows the moves the player has played.
      *
@@ -75,7 +68,6 @@ public interface View {
      * @return a string representing the updated moves
      */
     String updateMovesValue(int lastRow, int lastCol, int newRow, int newCol);
-
     /**
      * Moves the monster in the specified direction.
      *
@@ -84,10 +76,30 @@ public interface View {
      * @throws IOException if an I/O error occurs
      */
     Boolean moveMonster(Direction direction) throws IOException;
-
+    /**
+     * Updates the number of moves made by the player.
+     */
     void updateMovesCount(int movesCount);
 
+    /**
+     * Returns the top five scores in the game.
+     *
+     */
     String getTopFiveScores();
-
+    /**
+     * Undoes the last action in the game.
+     */
+    void undo();
+    /**
+     * Redoes the last undone action in the game.
+     */
+    void redo();
+    /**
+     * Checks if the current number of moves is a top score.
+     *
+     * @param movesCount the number of moves to check
+     * @return true if the moves count is a top score, false otherwise
+     */
+    boolean isTopScore(int movesCount);
 
 }
